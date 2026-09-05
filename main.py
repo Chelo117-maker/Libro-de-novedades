@@ -20,3 +20,7 @@ from pages import importar  # noqa: F401
 from pages import grupos  # noqa: F401
 
 ui.run(title="Libro de Novedades", dark=True)
+
+# ── Arrancar ──────────────────────────────────────────────────────────────────
+port = int(os.environ.get("PORT", 8080))
+ui.run(title="Libro de Novedades", dark=True, host="0.0.0.0", port=port)
