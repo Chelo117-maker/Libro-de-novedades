@@ -357,3 +357,91 @@ def obtener_miembros_guardia(nombre_grupo, fecha, franja):
                 miembros.add(cambio["legajo"])
 
     return list(miembros)
+
+
+def exportar_guardia_pdf(
+    guardia_dict: dict, ruta_salida: str = "guardia_exportada.pdf"
+) -> str:
+    """
+    Genera un PDF con los datos completos de una guardia.
+
+    Parámetros:
+        guardia_dict : Diccionario con fecha, franja, grupo y novedades.
+        ruta_salida  : Nombre del archivo PDF a generar.
+
+    Retorna:
+        Ruta del archivo generado.
+    """
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.platypus import (
+        SimpleDocTemplate,
+        Paragraph,
+        Spacer,
+        Table,
+        TableStyle,
+    )
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+
+    doc = SimpleDocTemplate(ruta_salida, pagesize=A4)
+    styles = getSampleStyleSheet()
+    story = []
+
+    titulo_style = ParagraphStyle(
+        "titulo", parent=styles["Heading1"], fontSize=16, spaceAfter=6
+    )
+    subtitulo_style = ParagraphStyle(
+        "subtitulo",
+        parent=styles["Heading2"],
+        fontSize=12,
+        spaceAfter=4,
+        textColor=colors.HexColor("#1976D2"),
+    )
+    normal_style = styles["Normal"]
+    pie_style = ParagraphStyle(
+        "pie", parent=styles["Normal"], fontSize=8, textColor=colors.grey
+    )
+
+    # Encabezado
+    story.append(Paragraph("Libro de Novedades", titulo_style))
+    hora = guardia_dict.get("hora", "")
+    story.append(
+        Paragraph(
+            f"Guardia del {guardia_dict['fecha']} — {guardia_dict['franja']}",
+            subtitulo_style,
+        )
+    )
+    story.append(Spacer(1, 0.5 * cm))
+
+    # Operarios
+    story.append(Paragraph("Operarios de la guardia:", subtitulo_style))
+    if guardia_dict["grupo"]:
+        for op in guardia_dict["grupo"]:
+            story.append(
+                Paragraph(
+                    f"• [{op['legajo']}] {op['nombre']} {op['apellido']}", normal_style
+                )
+            )
+    else:
+        story.append(Paragraph("Sin operarios registrados.", normal_style))
+    story.append(Spacer(1, 0.5 * cm))
+
+    # Novedades
+    story.append(Paragraph("Novedades registradas:", subtitulo_style))
+    if guardia_dict["novedades"]:
+        for nov in guardia_dict["novedades"]:
+            story.append(Paragraph(f"• {nov}", normal_style))
+    else:
+        story.append(Paragraph("Sin novedades registradas.", normal_style))
+    story.append(Spacer(1, 0.5 * cm))
+
+    # Pie
+    story.append(
+        Paragraph(
+            f"Generado por Libro de Novedades — {guardia_dict['fecha']}", pie_style
+        )
+    )
+
+    doc.build(story)
+    return ruta_salida

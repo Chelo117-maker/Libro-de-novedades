@@ -1,6 +1,7 @@
 # Formulario para registrar una nueva guardia con grupo, operarios y novedades.
 
 from nicegui import ui
+from datetime import datetime
 from operario import Operario
 from guardia import Guardia
 from components.sidebar import crear_sidebar, crear_header, ESTADO_CONFIG
@@ -31,132 +32,141 @@ def pagina_nueva_guardia() -> None:
         # Datos de la guardia
         ui.label("DATOS DE LA GUARDIA").classes("text-caption text-grey")
         with ui.card().classes("full-width q-mb-md"):
-            fecha = ui.input("Fecha (AAAA-MM-DD)").classes("full-width")
-            franja = ui.select(
-                ["Mañana", "Tarde", "Noche"], label="Franja horaria"
-            ).classes("full-width")
 
-        # Selección de grupo y operarios
-        ui.label("GRUPO DE TRABAJO").classes("text-caption text-grey")
+            # Selección de grupo y operarios
+            ui.label("GRUPO DE TRABAJO").classes("text-caption text-grey")
         with ui.card().classes("full-width q-mb-md"):
-            datos_grupos = novedades.cargar_grupos()
-            nombres_grupos = [g["nombre"] for g in datos_grupos["grupos"]]
             lista_op = ui.column().classes("q-mt-sm")
 
-            if nombres_grupos:
-                grupo_sel = ui.select(
-                    ["— Sin grupo —"] + nombres_grupos,
-                    value="— Sin grupo —",
-                    label="Seleccionar grupo base",
-                ).classes("full-width q-mb-sm")
+        # Recarga los grupos cada vez que se abre la página
+        def obtener_grupos() -> list[str]:
+            datos = novedades.cargar_grupos()
+            return [g["nombre"] for g in datos["grupos"]]
 
-                def cargar_grupo() -> None:
-                    """Carga los operarios del grupo seleccionado."""
-                    if grupo_sel.value == "— Sin grupo —":
-                        ui.notify("Seleccioná un grupo", color="warning")
-                        return
-                    ops = novedades.cargar_operarios()
-                    grupo = next(
-                        (
-                            g
-                            for g in datos_grupos["grupos"]
-                            if g["nombre"] == grupo_sel.value
-                        ),
-                        None,
-                    )
-                    if not grupo:
-                        return
-                    operarios_guardia.clear()
-                    lista_op.clear()
-                    for legajo in grupo["miembros_base"]:
-                        op_data = next((o for o in ops if o["legajo"] == legajo), None)
-                        if op_data:
-                            op = Operario(
-                                op_data["legajo"],
-                                op_data["nombre"],
-                                op_data["apellido"],
-                            )
-                            operarios_guardia.append(op)
-                            with lista_op:
-                                with ui.row().classes("items-center"):
-                                    ui.icon("check_circle").classes("text-positive")
-                                    ui.label(str(op)).classes("text-body2")
-                    ui.notify(f"Grupo '{grupo_sel.value}' cargado ✓", color="positive")
+        nombres_grupos = obtener_grupos()
 
-                ui.button("Cargar grupo", on_click=cargar_grupo).props(
-                    "flat color=primary"
+        if nombres_grupos:
+            grupo_sel = ui.select(
+                nombres_grupos,
+                label="Seleccionar grupo base",
+            ).classes("full-width q-mb-sm")
+
+            def cargar_grupo() -> None:
+                """Carga los operarios del grupo seleccionado en la guardia."""
+                if not grupo_sel.value:
+                    ui.notify("Seleccioná un grupo", color="warning")
+                    return
+                datos = novedades.cargar_grupos()
+                ops = novedades.cargar_operarios()
+                grupo = next(
+                    (g for g in datos["grupos"] if g["nombre"] == grupo_sel.value),
+                    None,
                 )
-                ui.separator().classes("q-my-sm")
+                if not grupo:
+                    ui.notify("Grupo no encontrado", color="negative")
+                    return
 
-            # Agregar operario desde registro
-            ops_fijos = novedades.cargar_operarios()
-            if ops_fijos:
-                ui.label("Agregar operario desde registro:").classes(
-                    "text-caption text-grey q-mb-xs"
-                )
-                op_select = ui.select(
-                    {
-                        op[
-                            "legajo"
-                        ]: f"[{op['legajo']}] {op['nombre']} {op['apellido']}"
-                        for op in ops_fijos
-                    },
-                    label="Seleccionar operario",
-                ).classes("full-width")
+                operarios_guardia.clear()
+                lista_op.clear()
 
-                def cargar_operario_fijo() -> None:
-                    """Agrega un operario del registro a la guardia."""
-                    op_data = next(
-                        (o for o in ops_fijos if o["legajo"] == op_select.value), None
-                    )
+                for legajo in grupo["miembros_base"]:
+                    op_data = next((o for o in ops if o["legajo"] == legajo), None)
                     if op_data:
-                        if op_data["legajo"] in [o.legajo for o in operarios_guardia]:
-                            ui.notify(
-                                "Este operario ya está en la guardia", color="warning"
-                            )
-                            return
                         op = Operario(
-                            op_data["legajo"], op_data["nombre"], op_data["apellido"]
+                            op_data["legajo"],
+                            op_data["nombre"],
+                            op_data["apellido"],
                         )
-                        operarios_guardia.append(op)
-                        with lista_op:
-                            with ui.row().classes("items-center"):
-                                ui.icon("check_circle").classes("text-positive")
-                                ui.label(str(op)).classes("text-body2")
-                        ui.notify(
-                            f"{op.nombre_completo()} agregado ✓", color="positive"
-                        )
+                    operarios_guardia.append(op)
+                    with lista_op:
+                        with ui.row().classes("items-center"):
+                            ui.icon("check_circle").classes("text-positive")
+                            ui.label(str(op)).classes("text-body2")
 
-                ui.button("+ Agregar operario", on_click=cargar_operario_fijo).props(
-                    "flat color=primary"
-                )
-                ui.separator().classes("q-my-sm")
+                if operarios_guardia:
+                    ui.notify(
+                        f"Grupo '{grupo_sel.value}' cargado con "
+                        f"{len(operarios_guardia)} operarios ✓",
+                        color="positive",
+                    )
+                else:
+                    ui.notify(
+                        "El grupo no tiene operarios registrados",
+                        color="warning",
+                    )
 
-            # Carga manual
-            ui.label("O ingresá uno que no está en el registro:").classes(
+            ui.button("Cargar grupo", on_click=cargar_grupo).props("flat color=primary")
+            ui.separator().classes("q-my-sm")
+        else:
+            ui.label(
+                "No hay grupos registrados. Podés agregar operarios manualmente."
+            ).classes("text-caption text-grey q-mb-sm")
+
+        # Agregar operario desde registro
+        ops_fijos = novedades.cargar_operarios()
+        if ops_fijos:
+            ui.label("Agregar operario desde registro:").classes(
                 "text-caption text-grey q-mb-xs"
             )
-            with ui.row().classes("full-width q-gutter-sm"):
-                legajo = ui.input("Legajo").classes("col")
-                nombre = ui.input("Nombre").classes("col")
-                apellido = ui.input("Apellido").classes("col")
+            op_select = ui.select(
+                {
+                    op["legajo"]: f"[{op['legajo']}] {op['nombre']} {op['apellido']}"
+                    for op in ops_fijos
+                },
+                label="Seleccionar operario",
+            ).classes("full-width")
 
-            def agregar_manual() -> None:
-                """Agrega un operario ingresado manualmente a la guardia."""
-                if not nombre.value:
-                    ui.notify("Completá al menos el nombre", color="warning")
-                    return
-                op = Operario(legajo.value, nombre.value, apellido.value)
-                operarios_guardia.append(op)
-                with lista_op:
-                    with ui.row().classes("items-center"):
-                        ui.icon("check_circle").classes("text-positive")
-                        ui.label(str(op)).classes("text-body2")
-                legajo.value = nombre.value = apellido.value = ""
+            def cargar_operario_fijo() -> None:
+                """Agrega un operario del registro a la guardia evitando duplicados."""
+                op_data = next(
+                    (o for o in ops_fijos if o["legajo"] == op_select.value), None
+                )
+                if op_data:
+                    if op_data["legajo"] in [o.legajo for o in operarios_guardia]:
+                        ui.notify(
+                            "Este operario ya está en la guardia", color="warning"
+                        )
+                        return
+                    op = Operario(
+                        op_data["legajo"], op_data["nombre"], op_data["apellido"]
+                    )
+                    operarios_guardia.append(op)
+                    with lista_op:
+                        with ui.row().classes("items-center"):
+                            ui.icon("check_circle").classes("text-positive")
+                            ui.label(str(op)).classes("text-body2")
+                    ui.notify(f"{op.nombre_completo()} agregado ✓", color="positive")
 
-            ui.button("+ Agregar a la guardia", on_click=agregar_manual).props(
+            ui.button("+ Agregar operario", on_click=cargar_operario_fijo).props(
                 "flat color=primary"
             )
+            ui.separator().classes("q-my-sm")
+
+        # Carga manual
+        ui.label("O ingresá uno que no está en el registro:").classes(
+            "text-caption text-grey q-mb-xs"
+        )
+        with ui.row().classes("full-width q-gutter-sm"):
+            legajo = ui.input("Legajo").classes("col")
+            nombre = ui.input("Nombre").classes("col")
+            apellido = ui.input("Apellido").classes("col")
+
+        def agregar_manual() -> None:
+            """Agrega un operario ingresado manualmente a la guardia."""
+            if not nombre.value:
+                ui.notify("Completá al menos el nombre", color="warning")
+                return
+            op = Operario(legajo.value, nombre.value, apellido.value)
+            operarios_guardia.append(op)
+            with lista_op:
+                with ui.row().classes("items-center"):
+                    ui.icon("check_circle").classes("text-positive")
+                    ui.label(str(op)).classes("text-body2")
+            legajo.value = nombre.value = apellido.value = ""
+
+        ui.button("+ Agregar a la guardia", on_click=agregar_manual).props(
+            "flat color=primary"
+        )
 
         # Novedades
         ui.label("NOVEDADES").classes("text-caption text-grey")
@@ -187,7 +197,7 @@ def pagina_nueva_guardia() -> None:
             Guarda la guardia en el JSON.
             Si hay herramientas con alerta muestra un diálogo de confirmación.
             """
-            if not fecha.value or not franja.value:
+            if not fecha or not franja:
                 ui.notify("Completá la fecha y la franja horaria", color="negative")
                 return
             if not operarios_guardia:
@@ -198,7 +208,7 @@ def pagina_nueva_guardia() -> None:
             con_alerta = [h for h in herramientas if h["estado"] != "Operativa"]
 
             def confirmar_y_guardar() -> None:
-                g = Guardia(fecha.value, franja.value)
+                g = Guardia(fecha, franja, hora_actual)
                 for op in operarios_guardia:
                     g.agregar_operario(op)
                 for nov in novedades_lst:
@@ -244,3 +254,50 @@ def pagina_nueva_guardia() -> None:
         ui.button("Guardar guardia", on_click=guardar_guardia).props(
             "color=primary rounded"
         ).classes("full-width")
+
+        def obtener_franja_automatica() -> str:
+            """
+            Determina la franja horaria según la hora actual.
+            Mañana: 06:00 a 13:59
+            Tarde:  14:00 a 21:59
+            Noche:  22:00 a 05:59
+            """
+            hora = datetime.now().hour
+            if 6 <= hora < 14:
+                return "Mañana"
+            elif 14 <= hora < 22:
+                return "Tarde"
+            else:
+                return "Noche"
+
+        # Fecha y hora actuales — no editables por el usuario
+        ahora = datetime.now()
+        fecha_actual = ahora.strftime("%Y-%m-%d")
+        hora_actual = ahora.strftime("%H:%M")
+        franja_auto = obtener_franja_automatica()
+
+        ui.label("DATOS DE LA GUARDIA").classes("text-caption text-grey")
+        with ui.card().classes("full-width q-mb-md"):
+            with ui.row().classes("items-center q-gutter-md q-mb-sm"):
+                with ui.column():
+                    ui.label("Fecha").classes("text-caption text-grey")
+                    ui.label(fecha_actual).classes("text-body1 text-primary")
+                with ui.column():
+                    ui.label("Hora de inicio").classes("text-caption text-grey")
+                    ui.label(hora_actual).classes("text-body1 text-primary")
+                with ui.column():
+                    ui.label("Franja detectada").classes("text-caption text-grey")
+                    franja_color = {
+                        "Mañana": "primary",
+                        "Tarde": "warning",
+                        "Noche": "purple",
+                    }
+                    ui.badge(franja_auto, color=franja_color.get(franja_auto, "grey"))
+
+            ui.label(
+                "La fecha, hora y franja se registran automáticamente al abrir este formulario."
+            ).classes("text-caption text-grey")
+
+        # Variables que usa guardar_guardia
+        fecha = fecha_actual
+        franja = franja_auto

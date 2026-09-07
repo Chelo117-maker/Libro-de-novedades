@@ -22,7 +22,9 @@ def _render_guardia(g: dict) -> None:
     with ui.card().classes("full-width q-mb-sm"):
         with ui.row().classes("items-center justify-between full-width"):
             with ui.column().classes("col"):
-                ui.label(g["fecha"]).classes("text-caption text-grey")
+                ui.label(f"{g['fecha']}  {g.get('hora', '')}").classes(
+                    "text-caption text-grey"
+                )
                 ui.label(
                     " / ".join(g["novedades"]) if g["novedades"] else "Sin novedades"
                 ).classes("text-body2")
@@ -36,11 +38,14 @@ def _render_guardia(g: dict) -> None:
                 )
 
                 def exportar(g: dict = g) -> None:
-                    """Genera y descarga el PDF de la guardia."""
-                    nombre_pdf = f"guardia_{g['fecha']}_{g['franja']}.pdf"
-                    ruta = novedades.exportar_guardia_pdf(g, nombre_pdf)
-                    ui.notify(f"PDF generado: {nombre_pdf}", color="positive")
-                    ui.download(ruta)
+                    """Genera el PDF y lo ofrece para descarga."""
+                    try:
+                        nombre_pdf = f"guardia_{g['fecha']}_{g['franja']}.pdf"
+                        ruta = novedades.exportar_guardia_pdf(g, nombre_pdf)
+                        ui.download(src=ruta, filename=nombre_pdf)
+                        ui.notify(f"PDF generado: {nombre_pdf}", color="positive")
+                    except Exception as e:
+                        ui.notify(f"Error al generar PDF: {str(e)}", color="negative")
 
                 ui.button(icon="picture_as_pdf", on_click=exportar).props(
                     "flat round color=negative"

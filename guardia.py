@@ -2,6 +2,7 @@
 
 from operario import Operario
 
+
 class Guardia:
     """
     Representa un turno de trabajo.
@@ -14,18 +15,20 @@ class Guardia:
         grupo     (list): Lista de objetos Operario que trabajan en la guardia.
         novedades (list): Lista de strings con las novedades de la guardia.
     """
-    def __init__(self, fecha, franja_horaria, grupo=None):
+
+    def __init__(self, fecha, franja_horaria, hora, grupo=None):
         """
         Inicializa una guardia.
         Si no se pasa un grupo, arranca con una lista vacía
         para evitar el bug clásico de Python con listas mutables como valor por defecto.
         """
-        self.fecha = fecha               # "2026-06-11"
-        self.franja = franja_horaria     # "Mañana" / "Tarde" / "Noche"
-        self. grupo= grupo or []         # Lista de objetos Operario
-        self.novedades = []              # Lista de strings
+        self.fecha = fecha  # "2026-06-11"
+        self.franja = franja_horaria  # "Mañana" / "Tarde" / "Noche"
+        self.hora = hora  #
+        self.grupo = grupo or []  # Lista de objetos Operario
+        self.novedades = []  # Lista de strings
 
-    def agregar_operario(self,operario):
+    def agregar_operario(self, operario):
         """Agrega un objeto Operario a la lista del grupo del turno."""
         self.grupo.append(operario)
 
@@ -40,11 +43,12 @@ class Guardia:
         una lista por comprensión.
         """
         return {
-        "fecha"    : self.fecha,
-        "franja"   : self.franja,
-        "grupo"    : [op.a_diccionario() for op in self.grupo],
-        "novedades": self.novedades
-    }
+            "fecha": self.fecha,
+            "franja": self.franja,
+            "hora": self.hora,
+            "grupo": [op.a_diccionario() for op in self.grupo],
+            "novedades": self.novedades,
+        }
 
     def __str__(self):
         """
@@ -53,4 +57,3 @@ class Guardia:
         """
         operarios = ", ".join([op.nombre_completo() for op in self.grupo])
         return f"{self.fecha} - {self.franja} | Grupo: {operarios}"
-    

@@ -99,34 +99,24 @@ def mostrar_dialogo_ayuda() -> None:
                     "text-subtitle2 text-primary q-mb-sm"
                 )
                 ui.label(
-                    "Si no tenés acceso al sistema, completá un archivo .txt así:"
-                ).classes("text-body2 q-mb-sm")
-                with ui.card().classes("full-width q-pa-md").style(
-                    "background:#1e1e1e; font-family:monospace; font-size:13px; line-height:1.8"
-                ):
-                    for linea in [
-                        "FECHA: 2026-09-03",
-                        "FRANJA: Mañana",
-                        "",
-                        "OPERARIOS:",
-                        "101 - Carlos Pérez",
-                        "205 - Ana López",
-                        "",
-                        "HERRAMIENTAS:",
-                        "Pinza amperométrica - Operativa",
-                        "Escalera 3m - Defectuosa",
-                        "",
-                        "NOVEDADES:",
-                        "Se detectó falla en el tablero principal.",
-                        "Falta reponer guantes en depósito.",
+                    "Descargá la plantilla, completála y subila desde la sección Importar."
+                ).classes("text-body2 q-mb-md")
+
+                with ui.card().classes("full-width q-pa-md"):
+                    ui.label("La plantilla incluye:").classes(
+                        "text-caption text-grey q-mb-sm"
+                    )
+                    for item in [
+                        "✓ Instrucciones de uso",
+                        "✓ Campos para completar (fecha, franja, operarios, herramientas, novedades)",
+                        "✓ Ejemplo completo para guiarse",
                     ]:
-                        ui.label(linea if linea else " ").classes("text-body2").style(
-                            "color:#a0aec0; margin:0; padding:0"
-                        )
-                ui.label(
-                    "⚠️ Respetá las etiquetas en mayúsculas y el formato de fecha."
-                ).classes("text-caption text-warning q-mt-sm")
+                        ui.label(item).classes("text-body2")
 
-        ui.button("Cerrar", on_click=dialogo.close).props("flat").classes("q-mt-md")
-
-    dialogo.open()
+                ui.button(
+                    "⬇ Descargar plantilla",
+                    on_click=lambda: ui.download(
+                        src="formato_novedades.txt", filename="formato_novedades.txt"
+                    ),
+                ).props("color=primary rounded").classes("full-width q-mt-md")
+                ui.timer(0.1, dialogo.open, once=True)

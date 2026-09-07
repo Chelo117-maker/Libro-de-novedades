@@ -1,0 +1,56 @@
+================================================================
+        LIBRO DE NOVEDADES — FORMATO ESTÁNDAR DE IMPORTACIÓN
+================================================================
+
+INSTRUCCIONES:
+  - Completá este archivo y subilo desde la sección "Importar"
+  - Respetá exactamente las etiquetas en MAYÚSCULAS
+  - La fecha debe estar en formato AAAA-MM-DD
+  - La franja debe ser exactamente: Mañana, Tarde o Noche
+  - Cada operario en una línea: LEGAJO - Nombre Apellido
+  - Cada herramienta en una línea: Nombre - Estado
+    (Estado puede ser: Operativa, Defectuosa, Faltante)
+  - Las novedades van una por línea, texto libre
+
+================================================================
+                    COMPLETAR DESDE AQUÍ
+================================================================
+
+FECHA: AAAA-MM-DD
+FRANJA: Mañana
+
+OPERARIOS:
+101 - Nombre Apellido
+102 - Nombre Apellido
+
+HERRAMIENTAS:
+Nombre de herramienta - Operativa
+Nombre de herramienta - Defectuosa
+
+NOVEDADES:
+Escribí la primera novedad acá
+Escribí la segunda novedad acá
+
+================================================================
+                        EJEMPLO COMPLETO
+================================================================
+
+FECHA: 2026-09-05
+FRANJA: Noche
+
+OPERARIOS:
+101 - Carlos Pérez
+205 - Ana López
+318 - Juan Díaz
+
+HERRAMIENTAS:
+Pinza amperométrica - Operativa
+Escalera 3m - Defectuosa
+Guantes dieléctricos - Faltante
+
+NOVEDADES:
+Se detectó falla en el tablero principal del sector 3.
+Falta reponer guantes de trabajo en depósito.
+Se completó mantenimiento preventivo del generador.
+
+================================================================

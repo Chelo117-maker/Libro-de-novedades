@@ -53,6 +53,7 @@ python-socketio==5.16.4
 pytokens==0.4.1
 PyYAML==6.0.3
 RapidFuzz==3.14.6
+reportlab==5.0.1
 simple-websocket==1.1.0
 starlette==1.6.0
 tinycss2==1.5.1
